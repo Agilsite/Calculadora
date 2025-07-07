@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" href="logo.jpg" type="image/png"/>
+<title>Super Calculadora com IMC</title>
+<style>
+  /* RESET & BASE */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #222831;
+    color: #eeeeee;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+    min-height: 100vh;
+    margin: 0;
+  }
+  h1 {
+    margin-bottom: 1rem;
+    color: #00adb5;
+    user-select: none;
+  }
+
+  /* CONTÊINER */
+  .container {
+    background: #393e46;
+    border-radius: 15px;
+    padding: 1rem;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 4px 15px #00adb5aa;
+  }
+
+  /* BOTÕES DE MODO */
+  .modo-botoes {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .modo-botoes button {
+    background: #00adb5;
+    border: none;
+    color: #222831;
+    font-weight: 700;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    user-select: none;
+    flex: 1;
+  }
+  .modo-botoes button.active {
+    background: #007f7a;
+    color: #fff;
+  }
+  .modo-botoes button:hover:not(.active) {
+    background: #019ca1;
+  }
+
+  /* DISPLAY DA CALCULADORA */
+  .display {
+    background: #222831;
+    color: #00adb5;
+    font-size: 2.5rem;
+    padding: 1rem;
+    border-radius: 10px;
+    text-align: right;
+    user-select: none;
+    min-height: 50px;
+    overflow-x: auto;
+  }
+  .subdisplay {
+    font-size: 1rem;
+    color: #393e46;
+    text-align: right;
+    height: 20px;
+    user-select: none;
+  }
+
+  /* BOTOES DA CALCULADORA */
+  .botoes {
+    margin-top: 1rem;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+  }
+  button {
+    padding: 1rem;
+    font-size: 1.3rem;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    background: #00adb5;
+    color: #222831;
+    font-weight: 700;
+    transition: background-color 0.25s ease;
+    user-select: none;
+  }
+  button:hover {
+    background: #019ca1;
+  }
+  button:active {
+    background: #007f7a;
+  }
+  button.operador {
+    background: #ff5722;
+    color: white;
+  }
+  button.operador:hover {
+    background: #e64a19;
+  }
+  button.operador:active {
+    background: #b43a14;
+  }
+  button.equal {
+    background: #00c853;
+    color: white;
+    /* grid-column removido para manter todos iguais */
+  }
+  button.equal:hover {
+    background: #00b246;
+  }
+  button.equal:active {
+    background: #007a31;
+  }
+  button.clear {
+    background: #d32f2f;
+    color: white;
+  }
+  button.clear:hover {
+    background: #b71c1c;
+  }
+  button.clear:active {
+    background: #7f1212;
+  }
+
+  /* FORMULÁRIO IMC */
+  form {
+    background: #393e46;
+    padding: 1rem;
+    border-radius: 15px;
+    color: #eeeeee;
+  }
+  form label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+  }
+  form input[type="number"] {
+    width: 100%;
+    padding: 0.5rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    border: none;
+    font-size: 1rem;
+  }
+  form button {
+    background: #00c853;
+    color: white;
+    border: none;
+    padding: 0.75rem;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    font-size: 1.1rem;
+    transition: background-color 0.3s;
+    margin-bottom: 1rem;
+  }
+  form button:hover {
+    background: #00b246;
+  }
+  form button:active {
+    background: #007a31;
+  }
+  .resultado-imc {
+    font-weight: 700;
+    font-size: 1.2rem;
+    text-align: center;
+    color: #00c853;
+  }
+
+  /* ESCONDER E MOSTRAR */
+  .oculto {
+    display: none;
+  }
+
+  /* RESPONSIVO */
+  @media(max-width: 420px) {
+    .container {
+      max-width: 100%;
+    }
+  }
+</style>
+</head>
+<body>
+
+<h1>Super Calculadora “Meu Tudo”</h1>
+<div class="container">
+
+  <div class="modo-botoes">
+    <button id="btnCalc" class="active" aria-pressed="true">Calculadora</button>
+    <button id="btnImc" aria-pressed="false">Cálculo IMC</button>
+  </div>
+
+  <!-- CALCULADORA -->
+  <div id="calcArea">
+    <div class="display" id="display">0</div>
+    <div class="subdisplay" id="subdisplay"></div>
+    <div class="botoes">
+      <button class="clear" id="clear">C</button>
+      <button id="backspace">←</button>
+      <button class="operador" data-op="/">÷</button>
+      <button class="operador" data-op="*">×</button>
+
+      <button data-num="7">7</button>
+      <button data-num="8">8</button>
+      <button data-num="9">9</button>
+      <button class="operador" data-op="-">−</button>
+
+      <button data-num="4">4</button>
+      <button data-num="5">5</button>
+      <button data-num="6">6</button>
+      <button class="operador" data-op="+">+</button>
+
+      <button data-num="1">1</button>
+      <button data-num="2">2</button>
+      <button data-num="3">3</button>
+      <button class="equal" id="equals">=</button>
+
+      <button data-num="0">0</button>
+      <button data-num=".">.</button>
+    </div>
+  </div>
+
+  <!-- IMC -->
+  <form id="imcArea" class="oculto" aria-label="Formulário para cálculo de IMC">
+    <label for="peso">Peso (kg):</label>
+    <input type="number" id="peso" min="1" step="0.1" placeholder="Ex: 70" required />
+    <label for="altura">Altura (m):</label>
+    <input type="number" id="altura" min="0.5" max="3" step="0.01" placeholder="Ex: 1.75" required />
+    <button type="submit">Calcular IMC</button>
+    <button type="button" id="btnLimparImc" style="background:#d32f2f; margin-top:0; margin-bottom:1rem; width:100%; border-radius:10px; font-weight:700; cursor:pointer; color:#fff; border:none;">Limpar IMC</button>
+    <div class="resultado-imc" id="resultado-imc"></div>
+  </form>
+
+</div>
+
+<script>
+  (() => {
+    // Modo toggle
+    const btnCalc = document.getElementById('btnCalc');
+    const btnImc = document.getElementById('btnImc');
+    const calcArea = document.getElementById('calcArea');
+    const imcArea = document.getElementById('imcArea');
+
+    btnCalc.addEventListener('click', () => {
+      btnCalc.classList.add('active');
+      btnCalc.setAttribute('aria-pressed', 'true');
+      btnImc.classList.remove('active');
+      btnImc.setAttribute('aria-pressed', 'false');
+      calcArea.classList.remove('oculto');
+      imcArea.classList.add('oculto');
+      clearCalc();
+      clearImc();
+    });
+
+    btnImc.addEventListener('click', () => {
+      btnImc.classList.add('active');
+      btnImc.setAttribute('aria-pressed', 'true');
+      btnCalc.classList.remove('active');
+      btnCalc.setAttribute('aria-pressed', 'false');
+      imcArea.classList.remove('oculto');
+      calcArea.classList.add('oculto');
+      clearCalc();
+      clearImc();
+    });
+
+    // CALCULADORA NORMAL
+    const display = document.getElementById('display');
+    const subdisplay = document.getElementById('subdisplay');
+    const buttons = document.querySelectorAll('.botoes button');
+    const clearBtn = document.getElementById('clear');
+    const backspaceBtn = document.getElementById('backspace');
+    const equalsBtn = document.getElementById('equals');
+
+    let current = '';
+
+    function atualizarDisplay() {
+      display.textContent = current || '0';
+    }
+
+    function clearCalc() {
+      current = '';
+      subdisplay.textContent = '';
+      atualizarDisplay();
+    }
+
+    buttons.forEach(btn => {
+      if(btn.hasAttribute('data-num')) {
+        btn.addEventListener('click', () => {
+          if (btn.dataset.num === '.' && current.endsWith('.')) return;
+          if (/[+\-*/.]$/.test(current) && /[+\-*/]/.test(btn.dataset.num)) return;
+          current += btn.dataset.num;
+          atualizarDisplay();
+        });
+      } else if(btn.classList.contains('operador')) {
+        btn.addEventListener('click', () => {
+          if (!current) return;
+          if (/[+\-*/.]$/.test(current)) {
+            current = current.slice(0, -1) + btn.dataset.op;
+          } else {
+            current += btn.dataset.op;
+          }
+          atualizarDisplay();
+        });
+      }
+    });
+
+    clearBtn.addEventListener('click', clearCalc);
+
+    backspaceBtn.addEventListener('click', () => {
+      current = current.slice(0, -1);
+      atualizarDisplay();
+    });
+
+    equalsBtn.addEventListener('click', () => {
+      try {
+        if(!current) return;
+        let res = Function('"use strict";return (' + current + ')')();
+        if (typeof res === 'number' && !isNaN(res) && isFinite(res)) {
+          res = Math.round((res + Number.EPSILON) * 100000) / 100000;
+          subdisplay.textContent = current + ' =';
+          current = res.toString();
+          atualizarDisplay();
+        } else {
+          display.textContent = 'Erro';
+        }
+      } catch {
+        display.textContent = 'Erro';
+      }
+    });
+
+    // teclado para calculadora
+    document.addEventListener('keydown', (e) => {
+      if(calcArea.classList.contains('oculto')) return; // só na calculadora
+
+      const allowedKeys = '0123456789.+-*/EnterBackspaceEscape';
+      if (!allowedKeys.includes(e.key)) return;
+
+      e.preventDefault();
+
+      if (e.key >= '0' && e.key <= '9') {
+        current += e.key;
+        atualizarDisplay();
+      } else if ('+-*/'.includes(e.key)) {
+        if (!current) return;
+        if (/[+\-*/.]$/.test(current)) {
+          current = current.slice(0, -1) + e.key;
+        } else {
+          current += e.key;
+        }
+        atualizarDisplay();
+      } else if (e.key === '.') {
+        if (current.endsWith('.')) return;
+        current += '.';
+        atualizarDisplay();
+      } else if (e.key === 'Backspace') {
+        current = current.slice(0, -1);
+        atualizarDisplay();
+      } else if (e.key === 'Escape') {
+        clearCalc();
+      } else if (e.key === 'Enter') {
+        equalsBtn.click();
+      }
+    });
+
+    // IMC
+    const formImc = document.getElementById('imcArea');
+    const resultadoImc = document.getElementById('resultado-imc');
+    const btnLimparImc = document.getElementById('btnLimparImc');
+
+    formImc.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const peso = parseFloat(document.getElementById('peso').value);
+      const altura = parseFloat(document.getElementById('altura').value);
+
+      if (!peso || !altura || peso <= 0 || altura <= 0) {
+        resultadoImc.textContent = 'Informe peso e altura válidos.';
+        resultadoImc.style.color = '#d32f2f';
+        return;
+      }
+
+      const imc = peso / (altura * altura);
+      const imcFix = imc.toFixed(2);
+
+      let classificacao = '';
+      if (imc < 18.5) classificacao = 'Abaixo do peso';
+      else if (imc < 24.9) classificacao = 'Peso normal';
+      else if (imc < 29.9) classificacao = 'Sobrepeso';
+      else if (imc < 34.9) classificacao = 'Obesidade grau 1';
+      else if (imc < 39.9) classificacao = 'Obesidade grau 2';
+      else classificacao = 'Obesidade grau 3 (mórbida)';
+
+      resultadoImc.style.color = '#00c853';
+      resultadoImc.textContent = `IMC: ${imcFix} — ${classificacao}`;
+    });
+
+    btnLimparImc.addEventListener('click', () => {
+      document.getElementById('peso').value = '';
+      document.getElementById('altura').value = '';
+      resultadoImc.textContent = '';
+    });
+
+  })();
+</script>
+
+</body>
+</html>
